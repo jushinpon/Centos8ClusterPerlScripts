@@ -40,7 +40,7 @@ if ($upStateNo > 1){die "The Number \($upStateNo\) of up state NIC is more than 
 $temp1[0] =~ m{:\s+(.+)\s*:};
 chomp $1;
 print "NIC: $1\n";
-if ($1 == ""){die "No NIC exits\n";}
+if ($1 eq ""){die "No NIC exits\n";}
 
 my $Nic_inner = $1;
 `ip a`=~ m{192.168.0.(\d{1,3})\/24};

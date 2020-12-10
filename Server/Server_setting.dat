@@ -1,13 +1,13 @@
 # Install your PC cluster for realmachine or virtualbox
-machinetype = realmachine
+machinetype = virtualbox
 
 #Domain for your PC cluster
 domainname = melcluster
 
 #For the internet interface card name, use "nmcli con" or "ip add" to show its name (if usb ifcard was used, it's better to use it for internet)
-if_internet = enp0s31f6
+if_internet = enp0s3
 #For the private interface card name
-if_private = enp1s0
+if_private = enp0s8
 
 # IP for internet (if_internet), NAT for virtualbox(10.0.2.15, default IP, may be different)
 IP_address = 140.117.59.182

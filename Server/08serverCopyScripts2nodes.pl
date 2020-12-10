@@ -32,6 +32,7 @@ for (@avaIP){
 	chomp;
 	print "IP: $_\n";
 }
+
 my $forkNo = @avaIP;
 print "forkNo: $forkNo\n";
 #my $forkNo = 30;
@@ -72,7 +73,6 @@ for (@avaIP){
 }# for loop
 $pm->wait_all_children;
 
-
 ## check node setting status of each node
 my $nodeNo = @avaIP;
 my $whileCounter = 0;
@@ -100,5 +100,19 @@ while ($Counter != $nodeNo){
 	print "Current node number with setting done: $Counter\n\n";
 	sleep(20);
 }
-
-print "\n\n***###06serverCopyScripts2node.pl: Copy scripts to each node done******\n\n";
+## check whether setting status of each node is OK
+print "Watch out! Check whether each node has been correctly deployed!\n\n";
+for (@avaIP){	
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+	my $nodeindex=sprintf("%02d",$temp);
+	my $nodename= "node"."$nodeindex";
+	my $temp = `cat /home/$nodename.txt`;
+	if($temp =~ m{(ALL DONE!!)}){
+		chomp $1;
+		print "$nodename: $1\n";
+	}
+	else{
+		print "***$nodename setting has problems. See /home/$nodename.txt\n";
+	}			 
+}

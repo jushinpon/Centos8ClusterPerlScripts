@@ -15,7 +15,7 @@ if ($upStateNo > 1){die "BAD: the Number \($upStateNo\) of up state NIC is more 
 $temp1[0] =~ m{:\s+(.+)\s*:};
 chomp $1;
 print "NIC: $1\n";
-if ($1 == ""){die "No NIC exits\n";}
+if ($1 eq ""){die "No NIC exits\n";}
 
 my @node_array = ("00interfaces_slave.pl","01packages_slave.pl"
 			   ,"02hosts_slave.pl","03NFS_slave.pl"
