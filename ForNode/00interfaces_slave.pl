@@ -11,7 +11,7 @@ then ifup XXXX
 use strict;
 use warnings;
 
-system("systemctl restart NetworkManager");
+#system("systemctl restart NetworkManager");
 system("systemctl enable NetworkManager");
 
 #Reading required information for node 
@@ -81,7 +81,7 @@ system("ifdown $Nic_inner");## stop this NIC and force it to use new seeting by 
 system("ip addr flush dev $Nic_inner");## remove all previous setting (because we want to assign new informatio)  
 system("ifup $Nic_inner"); ## use new setting
 
-system('systemctl restart NetworkManager');
+#system('systemctl restart NetworkManager');
 #system("killall -9 yum");
 system("dnf install -y chrony");#time sync
 system("systemctl start chronyd");#time sync

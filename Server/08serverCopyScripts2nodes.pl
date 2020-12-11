@@ -39,7 +39,7 @@ print "forkNo: $forkNo\n";
 my $pm = Parallel::ForkManager->new("$forkNo");
 
 for (@avaIP){	
-   sleep(1);
+   sleep(3);
 	$pm->start and next;
 	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
 	my $temp= $1 - 1;

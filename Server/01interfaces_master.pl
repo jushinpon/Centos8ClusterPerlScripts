@@ -85,7 +85,8 @@ if($ServerSetting{machinetype} ne "virtualbox"){
 	}
 }
 
-system("dnf config-manager --set-enable PowerTools");
+system("yum install dnf-plugins-core -y");
+system("yum config-manager --set-enable powertools");
 
 
 system("rm -rf /var/run/yum.pid");

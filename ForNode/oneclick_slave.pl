@@ -34,7 +34,7 @@ print "hostname $hostname\n";
 unlink "/home/$hostname".".txt"; 
 open my $Check, "> /home/$hostname".".txt"; #You may check the NFS workable or not at the same time
 print $Check "****NFS test\n";
-my $temp = `df -hT`;
+$temp = `df -hT`;
 print $Check "$temp\n";
 print $Check "\n\n *** If you see master:/home and master:/opt, NFS works for this slave node.\n";
 print $Check "========****End of NFS test\n\n";

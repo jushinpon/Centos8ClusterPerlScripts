@@ -5,7 +5,8 @@ use warnings;
 
 system("rm -rf /var/run/dnf.pid");
 system('dnf -y groupinstall "Development Tools"');
-system("dnf config-manager --set-enable PowerTools");
+system("yum install dnf-plugins-core -y");
+system("yum config-manager --set-enable powertools");
 my @package = ("vim", "wget", "net-tools", "epel-release", "htop", "make"
 			, "gcc-c++", "nfs-utils","yp-tools", "gcc-gfortran","psmisc"
 			, "ypbind" , "rpcbind","xauth","oddjob-mkhomedir");

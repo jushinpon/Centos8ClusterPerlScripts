@@ -11,7 +11,7 @@ use warnings;
 use Expect;  
 use Parallel::ForkManager;
 use MCE::Shared;
-my $expectT = 20;# time peroid for expect
+my $expectT = 5;# time peroid for expect
 
 $ENV{TERM} = "vt100";
 my $pass = "123"; ##For all roots of nodes
@@ -78,6 +78,7 @@ $pm->start and next;
     $exp -> send("chmod 700 /root/\.ssh\n") if ($exp->expect($expectT,'#'));
 	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 	$exp->soft_close();
+	#$exp->hard_close();
 $pm->finish;
 } # end of loop
 
@@ -98,6 +99,7 @@ for (@avaIP){
                           ]
                  ); # end of exp     
 	$exp->soft_close();
+	#$exp->hard_close();
 	$pm->finish;
 }# for loop
 
@@ -125,6 +127,7 @@ for (@avaIP){
    	$exp -> send("systemctl restart sshd \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 	$exp->soft_close();
+	#$exp->hard_close();
 	$pm->finish;
 }# for loop
 
@@ -157,6 +160,7 @@ for (@avaIP){
 	$exp->send ("\n") if ($exp->expect($expectT,'#'));
 	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 	$exp->soft_close();
+	#$exp->hard_close();
 	$pm->finish;
 } # end of loop
 $pm->wait_all_children;
