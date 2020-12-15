@@ -4,6 +4,8 @@ This script helps to build the passwordless ssh longin to each node by root acco
 
 Nodes_IP.dat shows all node IPs (from 00initial_interfacesSetting.pl). you
 may set new IPs for newly installed nodes. 
+nutanix@cvm$ ping REMOTE_HOSTNAME -c 10 -M do -s 8972
+ping REMOTE_HOSTNAME -f -l 8972
 =cut
 use strict;
 use warnings;

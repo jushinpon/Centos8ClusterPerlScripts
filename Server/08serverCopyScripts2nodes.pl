@@ -11,7 +11,13 @@ use warnings;
 use Expect;
 use Cwd; #Find Current Path
 use Parallel::ForkManager;
+use MCE::Shared;
+#****$jobtype = "nohup" or "copy"
+my $jobtype = "copy";# nohup perl for node scripts, otherwise copy files only
 
+# "ssh nodeXX 'ls /root/*.pl'` to check whether scp works, currently 9 files
+tie my @scpFailnodes, 'MCE::Shared';
+tie my %scpstatus, 'MCE::Shared';# good, or failed
 my $current_path = getcwd();# get the current path dir
 
 #print "****current_path: $current_path $current_path1\n";
@@ -50,34 +56,63 @@ for (@avaIP){
     
     print "**nodename**:$nodename\n";
     system("ssh $nodename \'rm -rf /root/*.pl\'");
- if ($? != 0){print "BAD: ssh $nodename \'rm -f /root/*.pl\' failed\n";};    
+ if ($?){print "BAD: ssh $nodename \'rm -f /root/*.pl\' failed\n";};    
     system("ssh $nodename \'rm -rf /root/*.txt\'");
- if ($? != 0){print "BAD: ssh $nodename \'rm -rf /root/*.txt\' failed\n";};    
+ if ($?){print "BAD: ssh $nodename \'rm -rf /root/*.txt\' failed\n";};    
     sleep(1);
     system("scp  $current_path/ForNode/* root\@$nodename:/root");
- if ($? != 0){print "BAD: scp  $current_path/ForNode/* root\@$nodename:/root failed\n";};    
-    sleep(1);
+ if ($?){print "BAD: scp  $current_path/ForNode/* root\@$nodename:/root failed\n";};    
+    sleep(1);	
     system("scp  $current_path/Server/Server_setting.dat root\@$nodename:/root");
- if ($? != 0){print "BAD: scp  /Server/Server_setting.dat root\@$nodename:/root failed\n";};    
-
+ if ($?){print "BAD: scp  /Server/Server_setting.dat root\@$nodename:/root failed\n";};    
+my @ls = `ssh $nodename 'ls /root/{*.pl,Server_setting.dat}'`;
+#for (@ls) {chomp;print "ls: $_ \n";}
+my $lsno = @ls;
+chomp $lsno;
+#print "ls number: $lsno\n";
+if($lsno == 9){
+	chomp $nodename;
+	$scpstatus{$nodename} = "good";
+}
+else{
+   chomp $nodename;
+   $scpstatus{$nodename} = "failed";
+   push @scpFailnodes,$nodename;
+}
+ print "***scpstatus: $scpstatus{$nodename}\n";
 	system("ssh $nodename \'rm -rf nohup.out\'");
- if ($? != 0){print "BAD: ssh $nodename \'rm -rf nohup.out\' failed\n";};    
+ if ($?){print "BAD: ssh $nodename \'rm -rf nohup.out\' failed\n";};    
     sleep(1);
-    my $exp = Expect->new;
-	$exp = Expect->spawn("ssh $nodename");
-	$exp->send ("nohup perl oneclick_slave.pl & \n") if ($exp->expect($expectT,'#'));# nohup perl can't be done by ssh nodeXX ''
-	$exp -> send("\n") if ($exp->expect($expectT,'#'));
-	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
-	$exp->soft_close();
+    if ($jobtype eq "nohup" and $scpstatus{$nodename} eq "good"){
+		my $exp = Expect->new;
+		$exp = Expect->spawn("ssh $nodename");
+		$exp->send ("nohup perl oneclick_slave.pl & \n") if ($exp->expect($expectT,'#'));# nohup perl can't be done by ssh nodeXX ''
+		$exp -> send("\n") if ($exp->expect($expectT,'#'));
+		$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
+		$exp->soft_close();
+    }
     $pm-> finish;
 }# for loop
 $pm->wait_all_children;
 
+print "\n\n****The following is to show nodes with failed scp process or all good!!!\n\n";
+if(@scpFailnodes){
+	for (@scpFailnodes){
+		chomp;
+		print "$_ scp process failed!!!\n";
+	}
+}
+else{
+	print "scp for all nodes are ok!!\n\n\n";
+}
+sleep(3);
 ## check node setting status of each node
-my $nodeNo = @avaIP;
+my $nodeNo = @avaIP - @scpFailnodes;
+my $totnode = @avaIP;
+my $badscpnode = @scpFailnodes;
 my $whileCounter = 0;
-my $Counter = 10000;
-while ($Counter != $nodeNo){
+my $Counter = 100;
+while ($whileCounter <= 100 and $Counter != $nodeNo and $jobtype eq "nohup"){
 	$whileCounter += 1;
 	$Counter = 0;
 
@@ -86,33 +121,49 @@ while ($Counter != $nodeNo){
 		my $temp= $1 - 1;
 		my $nodeindex=sprintf("%02d",$temp);
 		my $nodename= "node"."$nodeindex";
-		#print "**nodename**:$nodename\n";
-		if( -e "/home/$nodename.txt"){
-			$Counter += 1;			
-			print "$nodename: setting Done!!!\n";
-		}
-		else{
-			print "$nodename: setting hasn't done\n";
+		print "**nodename and scpstatus**:$nodename,$scpstatus{$nodename}\n";
+		if ($scpstatus{$nodename} eq "good"){
+			if( -e "/home/$nodename.txt"){
+				$Counter += 1;			
+				print "$nodename: setting Done!!!\n";
+			}
+			else{
+				print "$nodename: setting hasn't done\n";
+			}
 		}		 
 	}
 	print "\n\n****Doing while times: $whileCounter\n";
+	print "total available node number: $totnode\n";
+	print "bad scp node number: $badscpnode\n";
 	print "total node number need to do the setting: $nodeNo\n";
 	print "Current node number with setting done: $Counter\n\n";
 	sleep(20);
 }
 ## check whether setting status of each node is OK
-print "Watch out! Check whether each node has been correctly deployed!\n\n";
-for (@avaIP){	
-	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
-	my $temp= $1 - 1;
-	my $nodeindex=sprintf("%02d",$temp);
-	my $nodename= "node"."$nodeindex";
-	my $temp = `cat /home/$nodename.txt`;
-	if($temp =~ m{(ALL DONE!!)}){
-		chomp $1;
-		print "$nodename: $1\n";
+if($jobtype eq "nohup"){ 
+	print "Watch out! Check whether each node has been correctly deployed!\n\n";
+	for (@avaIP){	
+		$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+		my $temp= $1 - 1;
+		my $nodeindex=sprintf("%02d",$temp);
+		my $nodename= "node"."$nodeindex";
+		$temp = `cat /home/$nodename.txt`;
+		if($temp =~ m{(ALL DONE!!)}){
+			chomp $1;
+			print "$nodename: $1\n";
+		}
+		else{
+			print "***$nodename setting has problems. See /home/$nodename.txt\n";
+		}			 
 	}
-	else{
-		print "***$nodename setting has problems. See /home/$nodename.txt\n";
-	}			 
+}
+print "\n\n****Final reminding: the following shows nodes with scp failed or all good!!!\n\n";
+if(@scpFailnodes){
+	for (@scpFailnodes){
+		chomp;
+		print "$_ scp process failed!!!\n";
+	}
+}
+else{
+	print "scp for all nodes are ok!!\n";
 }

@@ -1,4 +1,4 @@
-# Install your PC cluster for realmachine or virtualbox
+#**** Install your PC cluster for realmachine or virtualbox
 machinetype = realmachine
 
 #Domain for your PC cluster

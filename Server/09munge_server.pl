@@ -5,6 +5,9 @@ use warnings;
 use Expect;
 use Parallel::ForkManager;
 
+system("yum install -y 'dnf-command(config-manager)'");
+system("dnf install dnf-plugins-core -y");
+system("dnf config-manager --set-enable powertools");
 
 open my $ss,"< ./Nodes_IP.dat" or die "No Nodes_IP.dat to read"; 
 my @temp_array=<$ss>;
@@ -23,13 +26,15 @@ my $pm = Parallel::ForkManager->new("$forkNo");
 # find all IPs of available nodes 
 $ENV{TERM} = "vt100";
 my $pass = "123"; ##For all roots of nodes
-
-for (0..$#avaIP){
-	
+#=bigin
+for (@avaIP){
+	sleep(3);
 	$pm->start and next;
-	my $temp=$_+1;
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
     my $nodeindex=sprintf("%02d",$temp);
     my $nodename= "node"."$nodeindex";
+    chomp $nodename;
     print "**nodename**:$nodename\n";    
 
     my $exp = Expect->new;
@@ -70,10 +75,10 @@ if(`grep 'munge' /etc/passwd`){#remove the old slurm account
 ### End of removing old munge setting
 
 system("dnf install mariadb-server mariadb-devel -y");
-=b
-Create the global users:
-Slurm and Munge require consistent UID and GID across every node in the cluster.
-=cut
+
+#Create the global users:
+#Slurm and Munge require consistent UID and GID across every node in the cluster.
+
 
 #For all the nodes, before you install Slurm or Munge:
 my $MUNGEUSER=950;
@@ -112,6 +117,7 @@ system("remunge");
 my $nodeNo = @avaIP;
 my $whileCounter = 0;
 my $Counter = 10000;
+print "\n\n";
 while ($Counter != $nodeNo){
 	$whileCounter += 1;
 	$Counter = 0;
@@ -124,7 +130,7 @@ while ($Counter != $nodeNo){
 		#print "**nodename**:$nodename\n";
 		if( -e "/home/munge_$nodename.txt"){
 			$Counter += 1;			
-			print "$nodename: setting Done!!!\n";
+			print "$nodename: munge check file exits!!!\n";
 		}
 		else{
 			print "$nodename: setting hasn't done\n";
@@ -135,4 +141,22 @@ while ($Counter != $nodeNo){
 	print "Current node number with setting done: $Counter\n\n";
 	sleep(20);
 }
-print "\n\n If everything ok, conduct \"07munge_server4slave.pl\"\n\n";
+#=cut
+## check whether setting status of each node is OK
+print "Watch out! Check whether munge at each node has been correctly installed!\n\n";
+for (@avaIP){	
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+	my $nodeindex=sprintf("%02d",$temp);
+	my $nodename= "node"."$nodeindex";
+	chomp $nodename;
+	$temp = `cat /home/munge_$nodename.txt`;
+	if($temp =~ m{(munge munge)}){
+		chomp $1;
+		print "$nodename: \"$1\" exists, munge installation is ok\n";
+	}
+	else{
+		print "***$nodename munge setting has problems. See /home/munge_$nodename.txt\n";
+	}			 
+}
+print "\n\n If everything ok, conduct \"10munge_server4slave.pl\"\n\n";

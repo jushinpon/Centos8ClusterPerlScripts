@@ -2,6 +2,10 @@
 #SLURM slave installation script developed by Prof. Shin-Pon Ju 2019/12/15
 use strict;
 use warnings;
+
+system("yum install -y 'dnf-command(config-manager)'");
+system("dnf install dnf-plugins-core -y");
+system("dnf config-manager --set-enable powertools");
 #Munge is an authentication tool used to identify messaging from the Slurm machines
 my $hostname = `hostname`;
 chomp $hostname;# need to chomp
@@ -59,9 +63,11 @@ system("chown -R munge: /etc/munge/ /var/log/munge/");
 system("chmod 0700 /etc/munge/ /var/log/munge/");
 system("chmod 0711 /var/lib/munge/");
 
-`echo '!!!!!Munge installatoin done!!!'> $hostfileDone`;
-`echo 'ls check for munge dir in /etc/munge'>> $hostfileDone`;
-`ls -al /etc/munge >> $hostfileDone`;
-
+system("echo '!!!!!Munge installatoin done!!!'> $hostfileDone");
+sleep(1);
+system("echo 'ls check for munge dir in /etc/munge'>> $hostfileDone");
+sleep(1);
+system("ls -al /etc/munge >> $hostfileDone");
+sleep(1);
 print "*****munge installation done \n";
 

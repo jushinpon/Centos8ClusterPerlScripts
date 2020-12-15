@@ -28,8 +28,8 @@ my $forkNo = @avaIP;
 my $pm = Parallel::ForkManager->new("$forkNo");
 
 my @partition = (
-'PartitionName=debug Nodes=node[01-02] Default=YES MaxTime=INFINITE State=UP',
-#'PartitionName=TotalCore24 Nodes=node[21] Default=YES MaxTime=INFINITE State=UP',
+'PartitionName=debug Nodes=node[04-09] Default=YES MaxTime=INFINITE State=UP',
+'PartitionName=AMD64Cores Nodes=node[02-03] Default=YES MaxTime=INFINITE State=UP',
 #'PartitionName=AMD Nodes=node02 Default=NO MaxTime=INFINITE State=UP'
 );
 
@@ -90,7 +90,7 @@ for (@avaIP){
 }
 
 for (@partition){`echo "$_" >> ./slurm.conf`;}
-die;
+
 unlink "/etc/slurm/slurm.conf";
 `cp ./slurm.conf /usr/local/etc/`;
 

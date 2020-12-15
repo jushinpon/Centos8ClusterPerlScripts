@@ -21,16 +21,8 @@ use Parallel::ForkManager;
 use MCE::Shared;
 use Cwd; #Find Current Path
 # find all threads to make this package
-my $socketNo = `lscpu|grep "^Socket(s):" | sed 's/^Socket(s): *//g'`; 
-chomp $socketNo;
-
-my $corePsocket = `lscpu|grep "^Core(s) per socket:" | sed 's/^Core(s) per socket: *//g'`; 
-chomp $corePsocket;
-
-my $threadPcore = `lscpu|grep "^Thread(s) per core:" | sed 's/^Thread(s) per core: *//g'`;
-chomp $threadPcore;
-print "***socketNo, corePsocket, threadPcore: $socketNo, $corePsocket, $threadPcore\n";
-my $thread4make = $socketNo * $corePsocket * $threadPcore;
+my $thread4make = `lscpu|grep "^CPU(s):" | sed 's/^CPU(s): *//g'`;
+chomp $thread4make;
 print "Total threads can be used for make: $thread4make\n";
 if($thread4make == 0){die "thread Number for make is $thread4make\n";}
 
@@ -86,7 +78,7 @@ my $pm = Parallel::ForkManager->new("$forkNo");
 ##
 ##die "Check pmix installation status\n";
 ###!!!!!!!!!! end of PMIx installation
-#=b
+=b
 
 system("dnf install -y chrony");#time sync
 system("systemctl start chronyd");#time sync
@@ -120,16 +112,16 @@ system("wget  $URL");
 system("rm -rf $buildPath");# remove old one
 system("mkdir $buildPath");# make a new one
 system("cp $currentVer $buildPath");# make a new one
-
+sleep(3);
 #die "uninstall check\n";
 ######## begin install slurm in each node (need fork in the future)
 chdir($current_path);
 print "**** Install slurm for each node\n";
 for (@avaIP){		
+	sleep(2);
 	$pm->start and next;
     system("scp ../ForNode/06slurm_slave.pl root\@$_:/root");
-    sleep(1);
-	my $exp = Expect->new;
+    my $exp = Expect->new;
 	$exp = Expect->spawn("ssh -l root $_ \n");	
 	$exp->send ("rm -f nohup.out\n") if ($exp->expect($expectT,'#'));
 	$exp->send ("nohup perl ./06slurm_slave.pl &\n") if ($exp->expect($expectT,'#'));
@@ -189,7 +181,7 @@ system("cp /root/slurm/$unzipFolder/etc/slurmctld.service /etc/systemd/system/")
 if($?){die "cp slurmctld.service failed!!\nReason:?!\n";}
 system("systemctl daemon-reload");
 if($?){die "systemctl daemon-reload failed!!\nReason:?!\n";}
-#=cut
+=cut
 ##configure slurm
 tie my %coreNo, 'MCE::Shared';
 tie my %socketNo, 'MCE::Shared';
@@ -254,6 +246,7 @@ for (@avaIP){
 	$pm->finish;
 } # end of loop
 $pm->wait_all_children;
+sleep(1);
 unlink "./IP_coreNo.txt";
 open my $ss3,">./IP_coreNo.txt";
 print $ss3 "IP  CoreNo SocketNo ThreadPerCore CorePerSocket NUMAnodeNo\n";
@@ -266,7 +259,7 @@ close($ss3);
 ## check slurm installation status of each node
 my $nodeNo = @avaIP;
 my $whileCounter = 0;
-my $slurmCounter = 10000;
+my $slurmCounter = 50;
 while ($slurmCounter != $nodeNo){
 	$whileCounter += 1;
 	$slurmCounter = 0;

@@ -84,9 +84,9 @@ if($ServerSetting{machinetype} ne "virtualbox"){
 		system("ifup $_"); ## use new setting
 	}
 }
-
-system("yum install dnf-plugins-core -y");
-system("yum config-manager --set-enable powertools");
+system("yum install -y 'dnf-command(config-manager)'");
+system("dnf install dnf-plugins-core -y");
+system("dnf config-manager --set-enable powertools");
 
 
 system("rm -rf /var/run/yum.pid");

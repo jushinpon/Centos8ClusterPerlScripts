@@ -23,7 +23,7 @@ my @node_array = ("00interfaces_slave.pl","01packages_slave.pl"
 for (@node_array){
 	system("perl $_");
 	if($?){die "conduct $_ failed!!!\n";}
-	sleep(1);
+	sleep(2);
 }
 
 `ip a` =~ m{192.168.0.(\d{1,3})\/24};

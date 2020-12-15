@@ -23,11 +23,14 @@ my $pm = Parallel::ForkManager->new("$forkNo");
 $ENV{TERM} = "vt100";
 my $pass = "123"; ##For all roots of nodes
 
-for (0..$#avaIP){	
+for (@avaIP){
+	sleep(1);	
 	$pm->start and next;
-	my $temp=$_+1;
-    my $nodeindex=sprintf("%02d",$temp);
-    my $nodename= "node"."$nodeindex";
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+	my $nodeindex=sprintf("%02d",$temp);
+	my $nodename= "node"."$nodeindex";
+	chomp $nodename;
     print "**nodename**:$nodename\n";
     system("scp  /etc/munge/munge.key root\@$nodename:/etc/munge/");
     sleep(1);
@@ -36,12 +39,14 @@ for (0..$#avaIP){
 } # end of loop
 $pm->wait_all_children;
 sleep(1);
-for (0..$#avaIP){	
+for (@avaIP){	
 	$pm->start and next;
-	my $temp=$_+1;
-    my $nodeindex=sprintf("%02d",$temp);
-    my $nodename= "node"."$nodeindex";
-    print "**nodename**:$nodename\n"; 
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+	my $nodeindex=sprintf("%02d",$temp);
+	my $nodename= "node"."$nodeindex";
+	chomp $nodename;
+	print "**nodename**:$nodename\n"; 
 	my $exp = Expect->new;
 	$exp = Expect->spawn("ssh $nodename\n");	
 	$exp->send ("chown munge: /etc/munge/munge.key\n") if ($exp->expect(2,'#'));
@@ -59,12 +64,14 @@ sleep(1);
 print "***** WATCH OUT!!!!!\n";
 print "***** Begin munge ssh decode check node by node!!!!!\n\n";
 sleep(3);
-for (0..$#avaIP){	
+for (@avaIP){	
 	#$pm->start and next;
-	my $temp=$_+1;
-    my $nodeindex=sprintf("%02d",$temp);
-    my $nodename= "node"."$nodeindex";
-    print "**nodename**:$nodename\n";
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+	my $nodeindex=sprintf("%02d",$temp);
+	my $nodename= "node"."$nodeindex";
+	chomp $nodename;
+	print "**nodename**:$nodename\n";
 	system("munge -n \| ssh $nodename unmunge");
 	#$pm->finish;
 }# for loop
