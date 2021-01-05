@@ -10,6 +10,7 @@ use Parallel::ForkManager;
 use MCE::Shared;
 
 `systemctl stop slurmctld.service`;# stop working slurmctld first
+`systemctl stop slurmd.service`;# stop working slurmctld first
 my $expectT = 30;# time peroid for expect
 
 open my $ss,"< ./Nodes_IP.dat" or die "No Nodes_IP.dat to read"; 
@@ -26,10 +27,24 @@ for (@avaIP){
 
 my $forkNo = @avaIP;
 my $pm = Parallel::ForkManager->new("$forkNo");
-
+#****
+my $master4calculation = "no"; #yes or no, whether to make the server to be a computing node
+#Server cpu information
+	# lscpu to get the information
+chomp (my $master_coreNo = `lscpu|grep \"^CPU(s):\" | sed 's/^CPU(s): *//g'`);
+#chomp (my $master_socketNo = `lscpu|grep \"^Socket(s):\" | sed 's/^Socket(s): *//g'`);
+chomp (my $master_threadcoreNo = `lscpu|grep \"^Thread(s) per core:\" | sed 's/^Thread(s) per core: *//g'`);
+chomp (my $lscpu_coresocketNo = `lscpu|grep \"^Core(s) per socket:\" | sed 's/^Core(s) per socket: *//g'`);
+chomp (my $master_numaNo = `lscpu|grep \"^NUMA node(s):\" | sed 's/^NUMA node(s): *//g'`);
+my $master_socketNo = $master_numaNo;
+my $master_coresocketNo = $lscpu_coresocketNo/$master_numaNo;
+#print "$master_coreNo,$master_socketNo,$master_threadcoreNo,$master_coresocketNo,$master_numaNo\n";
+#
+#print "sleeping !!!!\n";
+#sleep(100);
 my @partition = (
-'PartitionName=debug Nodes=node[04-09] Default=YES MaxTime=INFINITE State=UP',
-'PartitionName=AMD64Cores Nodes=node[02-03] Default=YES MaxTime=INFINITE State=UP',
+'PartitionName=debug Nodes=node[01-02] Default=YES MaxTime=INFINITE State=UP DisableRootJobs=NO',
+#'PartitionName=AMD64Cores Nodes=node[02-03] Default=YES MaxTime=INFINITE State=UP',
 #'PartitionName=AMD Nodes=node02 Default=NO MaxTime=INFINITE State=UP'
 );
 
@@ -89,6 +104,10 @@ for (@avaIP){
 #Sockets=1 CoresPerSocket=12 ThreadsPerCore=2
 }
 
+if ($master4calculation eq "yes"){	
+	`echo "NodeName=master NodeAddr=192.168.0.101 CPUs=$master_coreNo Sockets=$master_socketNo ThreadsPerCore=$master_threadcoreNo CoresPerSocket=$master_coresocketNo  State=UNKNOWN" >> ./slurm.conf`;#append the data into the file
+}
+
 for (@partition){`echo "$_" >> ./slurm.conf`;}
 
 unlink "/etc/slurm/slurm.conf";
@@ -115,23 +134,51 @@ for (@avaIP){
 $pm->wait_all_children;
 print "SCP done\n";
 #sleep(100);
-### Server setting for Server
-`chown -R slurm:root /var/spool`;
-`chown -R slurm:root /var/run`;
+### Server setting 
+system("rm -rf /var/spool/slurmctld");
+system("mkdir /var/spool/slurmctld");
+system("chown slurm: -R /var/spool/slurmctld");
+system("chmod -R 755 /var/spool/slurmctld");
+`rm -rf /var/run/slurmctld.pid`;
+`touch /var/run/slurmctld.pid`;
+`chown slurm:slurm /var/run/slurmctld.pid`;
+#`chown -R slurm:root /var/spool`;
+#`chown -R slurm:root /var/run`;
 system("rm -f /var/log/slurmctld.log");
-`touch /var/log/slurmctld.log`;
-`chown slurm:root /var/log/slurmctld.log`;
+system("touch /var/log/slurmctld.log");
+system("chown slurm:slurm /var/log/slurmctld.log");
+
 system("rm -f /var/log/slurm_jobacct.log");
 system("rm -f /var/log/slurm_jobcomp.log");
 
-`touch /var/log/slurm_jobacct.log /var/log/slurm_jobcomp.log`;
-`chown slurm:root /var/log/slurm_jobacct.log /var/log/slurm_jobcomp.log`;
+system("touch /var/log/slurm_jobacct.log /var/log/slurm_jobcomp.log");
+system("chown slurm:slurm /var/log/slurm_jobacct.log /var/log/slurm_jobcomp.log");
 system("firewall-cmd --zone=internal --add-port={6817/tcp,6818/udp} --permanent");
 system(" firewall-cmd --reload");
 sleep(1);
-`systemctl enable slurmctld.service`;
-`systemctl start slurmctld.service`;
+
+
 #`systemctl status slurmctld.service`;
+
+if($master4calculation eq "yes"){
+    `rm -rf /var/spool/slurmd`;
+	`mkdir /var/spool/slurmd`;
+	`chown slurm: -R /var/spool/slurmd`;
+	`chmod 755 /var/spool/slurmd`;
+	`rm -f /var/log/slurmd.log`;
+	`touch /var/log/slurmd.log`;	
+	`chown slurm: /var/log/slurmd.log`;
+	#`rm -rf /var/run/slurmd.pid`;
+	#`touch /var/run/slurmd.pid`;
+	#`chown slurm:root /var/run/slurmd.pid`;
+	
+	#`systemctl stop firewalld`;
+	#`systemctl disable firewalld`;
+	`slurmd -C`;
+	`systemctl enable slurmd.service`;
+	`systemctl stop slurmd.service`;
+	`systemctl start slurmd.service`;	
+}
 
 sleep(1);
 ######## start and enable slurm  for each node
@@ -146,14 +193,14 @@ for (sort keys %coreNo){
 	$exp = Expect->spawn("ssh $Nodename \n");
 	$exp -> send("rm -rf /var/spool/slurmd \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("mkdir /var/spool/slurmd \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("chown slurm:root /var/spool/slurmd \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("chown slurm: -R /var/spool/slurmd \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("chmod 755 /var/spool/slurmd \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("rm -rf /var/log/slurmd.log \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("rm -f /var/log/slurmd.log \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("touch /var/log/slurmd.log \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("rm -rf /var/log/slurmd.pid \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("touch /var/log/slurmd.pid \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("chown slurm:root /var/log/slurmd.log \n") if ($exp->expect($expectT,'#'));
-	$exp -> send("chown slurm:root /var/run/slurmd.pid \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("rm -rf /var/run/slurmd.pid \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("touch /var/run/slurmd.pid \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("chown slurm: /var/log/slurmd.log \n") if ($exp->expect($expectT,'#'));
+	$exp -> send("chown slurm: /var/run/slurmd.pid \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("systemctl stop firewalld\n") if ($exp->expect($expectT,'#'));
 	$exp -> send("systemctl disable firewalld\n") if ($exp->expect($expectT,'#'));
 	$exp -> send("slurmd -C \n") if ($exp->expect($expectT,'#'));
@@ -161,7 +208,7 @@ for (sort keys %coreNo){
 	$exp -> send("systemctl stop slurmd.service \n") if ($exp->expect($expectT,'#'));
 	$exp -> send("systemctl start slurmd.service \n") if ($exp->expect($expectT,'#'));
 	#$exp -> send("systemctl status slurmd.service \n") if ($exp->expect($expectT,'#'));
-	$exp -> send(" \n") if ($exp->expect($expectT,'2'));
+	#$exp -> send(" \n") if ($exp->expect($expectT,'2'));
 	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 	$exp->soft_close();
 	$pm->finish;
@@ -173,13 +220,18 @@ $pm->wait_all_children;
 print "***** WATCH OUT!!!!!\n";
 print "***** Begin slurmd check node by node!!!!!\n\n";
 sleep(3);
-
+if($master4calculation eq "yes"){
+	print "***nodename: master\n";
+	system("slurmd -C");
+	sleep(3);
+}
 for (@avaIP){	
     $_ =~/192.168.0.(\d{1,3})/;
 	my $nodeID = $1 - 1;# node ID according to th fourth number of current IP
 	chomp($nodeID);
     my $formatted_nodeID = sprintf("%02d",$nodeID);
     my $nodename="node"."$formatted_nodeID";
+    print "***nodename: $nodename";
     my $exp = Expect->new;
 	$exp = Expect->spawn("ssh $nodename \n");
 	$exp -> send("slurmd -C \n") if ($exp->expect($expectT,'#'));	
@@ -189,6 +241,10 @@ for (@avaIP){
 	sleep(3);
 }# for loop
 
+print "********Activate slurmctld now!\n";
+sleep(1);
+system("systemctl enable slurmctld.service");
+system("systemctl start slurmctld.service");
 #To display the compute nodes: scontrol show nodes
 #To display the job queue: scontrol show jobs
 #To submit script jobs: sbatch -N2 script-file

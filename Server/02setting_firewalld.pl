@@ -6,12 +6,15 @@
 #firewall-cmd --permanent --zone=public --list-all
 #firewall-cmd --runtime-to-permanent
 #firewall-cmd --reload
+firewall-cmd --list-rich-rules
 =cut
 
 
 
 use strict;
 use warnings;
+system("systemctl start firewalld");
+
 system("systemctl mask iptables.service");
 system("systemctl mask ip6tables.service");
 system("systemctl mask ebtables.service");
@@ -45,9 +48,8 @@ system ("$cmd --get-zone-of-interface=$ServerSetting{if_internet}"); #set ifcard
 #`echo "ZONE=external" >> /etc/sysconfig/network-scripts/ifcfg-$ServerSetting{if_internet}`;#set ifcard zone=block.
 #system ("systemctl restart NetworkManager");
 
-#system ("firewall\-cmd \-\-zone\=external \\
-#  \-\-add\-rich\-rule\=\'rule family\=\"ipv4\" source address\=\"192\.168\.0\.0\/24\" accept\' \\
-#  \-\-permanent"); 
+#`firewall-cmd --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'`;
+   
 #system ("firewall\-cmd \-\-zone\=external \\
 #  \-\-add\-rich\-rule\=\'rule family\=\"ipv4\" source address\=\"140\.117\.0\.0\/24\" accept\' \\
 #  \-\-permanent");
@@ -60,9 +62,10 @@ system ("$cmd --get-zone-of-interface=$ServerSetting{if_internet}"); #set ifcard
 #system ("sysctl -p"); # Entry into force of the command
 system ("$cmd --permanent --zone=internal --change-interface=$ServerSetting{if_private}"); # private net zone setting 
 #system ("$cmd --permanent --zone=external --add-masquerade ");# ip camouflage
-system ("$cmd --permanent --zone=external --direct --passthrough ipv4 -t nat POSTROUTING -o $ServerSetting{if_internet} -j MASQUERADE -s 192.168.0.0/24"); #share internet in 192.168.0.0
+system ("$cmd --permanent --zone=external --passthrough ipv4 -t nat POSTROUTING -o $ServerSetting{if_internet} -j MASQUERADE -s 192.168.0.0/24"); #share internet in 192.168.0.0
 system ("$cmd --permanent --zone=external --add-service=ftp"); #allow the ftp service to work
-
+#system ("firewall-cmd --permanent --zone=internal --add-rich-rule=\'rule family=\"ipv4\" source address=\"192.168.0.0/24\" accept\'");
+#sleep(10);
 
 system ("$cmd --permanent --zone=external --add-forward-port=port=1122:proto=tcp:toport=22");#:toaddr=192.168.0.0/24");
 #NFS service
@@ -70,7 +73,7 @@ system ("$cmd --permanent --zone=internal --add-service=nfs");
 system ("$cmd --permanent --zone=internal --add-service=rpc-bind");
 system ("$cmd --permanent --zone=internal --add-service=mountd");
 system ("$cmd --permanent --zone=internal --add-source=192.168.0.0/24");#:toaddr=192.168.0.0/24");
-
+`firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 0 -s 192.168.0.0/24  -j ACCEPT`;
 system ("$cmd --reload"); #reload
 #for (2..30){system ("$cmd --zone=external --add-forward-port=port=1122:proto=tcp:toport=22:toaddr=192.168.0.$_ --permanent");}
 #system ("$cmd --reload"); #reload

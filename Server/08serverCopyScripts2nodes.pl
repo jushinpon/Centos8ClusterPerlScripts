@@ -13,7 +13,7 @@ use Cwd; #Find Current Path
 use Parallel::ForkManager;
 use MCE::Shared;
 #****$jobtype = "nohup" or "copy"
-my $jobtype = "copy";# nohup perl for node scripts, otherwise copy files only
+my $jobtype = "nohup";# nohup perl for node scripts, otherwise copy files only
 
 # "ssh nodeXX 'ls /root/*.pl'` to check whether scp works, currently 9 files
 tie my @scpFailnodes, 'MCE::Shared';

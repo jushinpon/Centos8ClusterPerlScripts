@@ -1,5 +1,10 @@
 ## make NFS client (slave node)
 #!/usr/bin/perl
+#setsebool -P use_nfs_home_dirs boolean 1
+#To verify that the setting has been changed, execute the following:
+#getsebool use_nfs_home_dirs boolean
+#If enabled, the output should be the following:
+#use_nfs_home_dirs --> on
 use strict;
 use warnings;
 
@@ -18,5 +23,9 @@ system("perl -p -i.bak -e 's/master:.+//g;' /etc/fstab");# remove old setting li
 
 if(!`grep 'mount -a' /etc/rc.local`){
 	`echo mount -a >> /etc/rc.local`;}
-
+	
+if(!`grep 'setsebool -P use_nfs_home_dirs 1' /etc/rc.local`){
+	`echo 'setsebool -P use_nfs_home_dirs 1' >> /etc/rc.local`;}
+	
+#`setsebool -P use_nfs_home_dirs 1`;
 system("mount -a");

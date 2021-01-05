@@ -6,6 +6,7 @@ SlurmctldHost=master
 #
 #MailProg=/bin/mail
 MpiDefault=none
+DisableRootJobs=NO
 #MpiParams=ports=#-#
 ProctrackType=proctrack/pgid
 ReturnToService=1

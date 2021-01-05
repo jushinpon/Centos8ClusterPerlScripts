@@ -37,7 +37,17 @@ my $buildPath = "/root/slurm";# the upper level path to configure, make, and ins
 system("systemctl disable slurmd.service");
 system("systemctl stop slurmd.service");
 system("dnf remove slurm*");# if you use rpm to install before
-chdir("$buildPath/$unzipFolder"); system("make uninstall");# if installation from scratch
+chdir("$buildPath/$unzipFolder");
+system("make uninstall");# if installation from scratch
+system("rm -f /var/log/slurmctld.log");
+system("rm -f /var/log/slurm_jobacct.log");
+system("rm -f /var/log/slurm_jobcomp.log");
+
+system(	"rm -f /var/run/slurmd.pid");
+system(	"rm -f /var/run/slurmctld.pid");
+system("rm -f /var/log/slurmd.log");
+system("rm -rf /var/spool/slurmd");
+system("rm -rf /var/spool/slurmctld");
 
 system("rm -rf $buildPath");
 system("mkdir $buildPath");

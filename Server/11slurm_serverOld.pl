@@ -46,17 +46,6 @@ for (@avaIP){
 	chomp;
 	print "IP: $_\n";
 }
-
-for (@avaIP){	
-		$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
-		my $temp= $1 - 1;
-		my $nodeindex=sprintf("%02d",$temp);
-		my $nodename= "node"."$nodeindex";
-		chomp $nodename;
-		#print "**nodename**:$nodename\n";
-		unlink "/home/slurmDone_$nodename.txt";
-}
-
 my $forkNo = @avaIP;
 my $pm = Parallel::ForkManager->new("$forkNo");
 
@@ -90,14 +79,11 @@ my $pm = Parallel::ForkManager->new("$forkNo");
 ##die "Check pmix installation status\n";
 ###!!!!!!!!!! end of PMIx installation
 #=b
-
 system("dnf install -y chrony");#time sync
 system("systemctl start chronyd");#time sync
 system("systemctl enable chronyd");#time sync
 system("timedatectl set-timezone Asia/Taipei");## setting timezone
 #=big
-
-
 # stop old slurm, if installed
 system("systemctl stop slurmctld.service");
 system("systemctl stop slurmd.service");
@@ -108,37 +94,22 @@ my $unzipFolder = "slurm-19.05.4";#***** the latest version of this package (che
 my $URL = "https://download.schedmd.com/slurm/$currentVer";#url to download
 my $Dir4download = "$packageDir/slurm_download"; #the directory we download slurm source code
 my $buildPath = "/root/slurm";# the path to configure, make, and install slurm
-
-#uninstall old one and remove old files
+#uninstall old one
 chdir("$buildPath/$unzipFolder");
 system("make uninstall");
-system("rm -f /var/log/slurmctld.log");
-system("rm -f /var/log/slurm_jobacct.log");
-system("rm -f /var/log/slurm_jobcomp.log");
-
-system(	"rm -f /var/run/slurmd.pid");
-system(	"rm -f /var/run/slurmctld.pid");
-system("rm -f /var/log/slurmd.log");
-system("rm -rf /var/spool/slurmd");
-system("rm -rf /var/spool/slurmctld");
-chdir($current_path);
 #
-#=big
 #Begin downloading and install process
-
 system ("rm -rf $Dir4download");# remove the older directory first
 system("mkdir $Dir4download");# make a new directory for NFS (because the package is needed for each node)
-
 chdir("$Dir4download");
 system("wget  $URL");
-
 system("rm -rf $buildPath");# remove old one
 system("mkdir $buildPath");# make a new one
 system("cp $currentVer $buildPath");# make a new one
 sleep(3);
-chdir($current_path);
 #die "uninstall check\n";
 ######## begin install slurm in each node (need fork in the future)
+chdir($current_path);
 print "**** Install slurm for each node\n";
 for (@avaIP){		
 	sleep(2);
@@ -148,33 +119,26 @@ for (@avaIP){
 	$exp = Expect->spawn("ssh -l root $_ \n");	
 	$exp->send ("rm -f nohup.out\n") if ($exp->expect($expectT,'#'));
 	$exp->send ("nohup perl ./06slurm_slave.pl &\n") if ($exp->expect($expectT,'#'));
-	#$exp -> send("\n") if ($exp->expect($expectT,'#'));
+	$exp -> send("\n") if ($exp->expect($expectT,'#'));
 	$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 	$exp->soft_close();
 	$pm->finish;
 	sleep(2);
 } # end of loop
 $pm->wait_all_children;
-
-#die "check nohup";
 ## slurm server installation
-
 my @slurm_pack = qw(rpm-build openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel 
 rrdtool-devel bzip2-devel zlib-devel ncurses-devel fribidi man2html libibmad libibumad perl-ExtUtils-MakeMaker perl-DBI  perl-DBD-SQLite
 wget python3 );
-
 for (@slurm_pack){
 	system("dnf -y install $_");
 	if($?){die "Installation of $_ package failed (08slurm_server.pl)\n";}
 }
 system ("dnf upgrade -y");
 system("ln -s /usr/bin/python3 /usr/bin/python");# for slurm configure process
-
 chdir("$buildPath");
 system ("tar -xjf $currentVer");#UNZIP bz2 file
 if($?){die "tar -xjf $currentVer failed!\n";}
-chdir($current_path);
-
 chdir("$buildPath/$unzipFolder");
 #system("./configure --with-pmix=$pmix_installPath |tee 00slurm_configureCheck.txt");
 system("./configure");
@@ -184,16 +148,12 @@ system("make -j $thread4make");
 if($?){die "slurm make failed!!\nReason:?!\n";}
 system("make install");
 if($?){die "slurm make install failed!!\nReason:?!\n";}
-chdir($current_path);
-
 #make pmi2 lib
 chdir("$buildPath/$unzipFolder/contribs/pmi2");
 system("make -j $thread4make");
 if($?){die "pmi2 lib make failed!!\nReason:?!\n";}
 system("make install");
 if($?){die "pmi2 lib make install failed!!\nReason:?!\n";}
-chdir($current_path);
-
 #die "Check slurm installation status";
 # slurm server setting
 system("rm -f /etc/systemd/system/slurmd.service");
@@ -209,7 +169,6 @@ system("systemctl daemon-reload");
 if($?){die "systemctl daemon-reload failed!!\nReason:?!\n";}
 #=cut
 ##configure slurm
-#chdir($current_path);
 tie my %coreNo, 'MCE::Shared';
 tie my %socketNo, 'MCE::Shared';
 tie my %threadcoreNo, 'MCE::Shared';
@@ -275,14 +234,14 @@ for (@avaIP){
 $pm->wait_all_children;
 sleep(1);
 unlink "./IP_coreNo.txt";
-open my $ss3,">./IP_coreNo.txt" or die "Can't open IP_coreNo.txt\n Reason:$!\n";
+open my $ss3,">./IP_coreNo.txt";
 print $ss3 "IP  CoreNo SocketNo ThreadPerCore CorePerSocket NUMAnodeNo\n";
 for (sort keys %coreNo){
 	print $ss3 "$_  $coreNo{$_} $socketNo{$_} $threadcoreNo{$_} $coresocketNo{$_} $numaNo{$_}\n";
 	print  "$_  $coreNo{$_} $socketNo{$_} $threadcoreNo{$_} $coresocketNo{$_} $numaNo{$_}\n";
 }
 close($ss3);
-
+#die;
 ## check slurm installation status of each node
 my $nodeNo = @avaIP;
 my $whileCounter = 0;
