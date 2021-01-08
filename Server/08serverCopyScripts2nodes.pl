@@ -15,6 +15,14 @@ use MCE::Shared;
 #****$jobtype = "nohup" or "copy"
 my $jobtype = "nohup";# nohup perl for node scripts, otherwise copy files only
 
+## set unlimited ram memory
+if(!`grep '* soft memlock unlimited' /etc/security/limits.conf`){
+	`echo '* soft memlock unlimited' >> /etc/security/limits.conf`;
+}
+if(!`grep '* hard memlock unlimited' /etc/security/limits.conf`){
+	`echo '* hard memlock unlimited' >> /etc/security/limits.conf`;
+}
+
 # "ssh nodeXX 'ls /root/*.pl'` to check whether scp works, currently 9 files
 tie my @scpFailnodes, 'MCE::Shared';
 tie my %scpstatus, 'MCE::Shared';# good, or failed
@@ -87,6 +95,10 @@ else{
 		my $exp = Expect->new;
 		$exp = Expect->spawn("ssh $nodename");
 		$exp->send ("nohup perl oneclick_slave.pl & \n") if ($exp->expect($expectT,'#'));# nohup perl can't be done by ssh nodeXX ''
+		$exp -> send("\n") if ($exp->expect($expectT,'#'));
+		$exp -> send("rm -f oneclick_start.dat\n") if ($exp->expect($expectT,'#'));
+		$exp -> send("echo \'oneclick_start'\ > oneclick_start.dat\n") if ($exp->expect($expectT,'#'));
+		$exp -> send("ps aux|grep oneclick_slave.pl >> oneclick_start.dat\n") if ($exp->expect($expectT,'#'));
 		$exp -> send("\n") if ($exp->expect($expectT,'#'));
 		$exp -> send("exit\n") if ($exp->expect($expectT,'#'));
 		$exp->soft_close();

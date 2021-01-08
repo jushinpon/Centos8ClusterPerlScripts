@@ -2,13 +2,20 @@
 use strict;
 use warnings;
 
+## set unlimited ram memory
+if(!`grep '* soft memlock unlimited' /etc/security/limits.conf`){
+	`echo '* soft memlock unlimited' >> /etc/security/limits.conf`;
+}
+if(!`grep '* hard memlock unlimited' /etc/security/limits.conf`){
+	`echo '* hard memlock unlimited' >> /etc/security/limits.conf`;
+}
 
 system("rm -rf /var/run/dnf.pid");
 system('dnf -y groupinstall "Development Tools"');
 system("yum install 'dnf-command(config-manager)'");
 system("dnf install dnf-plugins-core -y");
 system("dnf config-manager --set-enable powertools");
-
+`dnf remove -y cockpit`;# not use this web manager tool for cluster
 my @package = ("vim", "wget", "net-tools", "epel-release", "htop", "make"
 			, "gcc-c++", "nfs-utils","yp-tools", "gcc-gfortran","psmisc"
 			, "ypbind" , "rpcbind","xauth","oddjob-mkhomedir");

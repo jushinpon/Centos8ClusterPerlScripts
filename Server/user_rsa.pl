@@ -79,7 +79,39 @@ for (@avaIP){
 
 $pm->wait_all_children;
 sleep(1);
+## go through nodename fingerprint again
 
+for (@avaIP){	
+	$pm->start and next;
+	chomp;
+	$_ =~/192.168.0.(\d{1,3})/;#192.168.0.X
+	my $temp= $1 - 1;
+    my $nodeindex=sprintf("%02d",$temp);
+    my $nodename= "node"."$nodeindex";
+    chomp $nodename;
+    print "**nodename**:$nodename\n";
+	my $exp = Expect->new;
+	$exp = Expect->spawn("su $user \n");
+	$exp -> send("ssh $nodename\n") if ($exp->expect($expectT,"$user"));
+    $exp->expect($expectT,					[
+						qr/\/\[fingerprint\]\)\?/i,
+						sub {
+								my $self = shift ;
+								$self->send("yes\n");	#first time to ssh into this node				        
+								#Are you sure you want to continue connecting (yes/no)?
+							}
+					]
+                 ); # end of exp	
+   $exp -> send("exit\n") if ($exp->expect($expectT,"$user"));#back to user@master
+   $exp -> send("exit\n") if ($exp->expect($expectT,"$user"));#back to root@master
+
+   $exp->soft_close();
+	#$exp->hard_close();
+	$pm->finish;
+}# for loop
+
+$pm->wait_all_children;
+sleep(1);
 
 print "***** WATCH OUT!!!!!\n";
 print "***** Begin  ssh passwordless test node by node!!!!!\n\n";
@@ -90,9 +122,15 @@ for (@avaIP){
 	my $temp= $1 - 1;
     my $nodeindex=sprintf("%02d",$temp);
     my $nodename= "node"."$nodeindex";
+    chomp $nodename;
     print "**nodename**:$nodename\n";
-	system("ssh $nodename \"echo '$nodename done!'; exit\"");
+    my $exp = Expect->new;
+	$exp = Expect->spawn("su $user \n");
+	$exp -> send("ssh $nodename\n") if ($exp->expect($expectT,"$user"));
+	$exp -> send("exit\n") if ($exp->expect($expectT,"$user"));#back to user@master
+    $exp -> send("exit\n") if ($exp->expect($expectT,"$user"));#back to root@master
+	$exp->soft_close();
 	print "\n\n*****";
 	#$pm->finish;
 }# for loop
-print "\n\n***###05root_rsa.pl: root passwordless setting done******\n\n";
+print "\n\n***###user_rsa.pl: user passwordless setting done******\n\n";

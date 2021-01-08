@@ -5,7 +5,6 @@
 =cut
 use strict;
 use warnings;
-
 #### check whether there are more than one NICs in UP state.
 my $temp = `ip a|grep "state UP"`;
 my @temp = split "\n", $temp;
@@ -33,6 +32,7 @@ my $hostname="node"."$formatted_nodeID";
 print "hostname $hostname\n";
 unlink "/home/$hostname".".txt"; 
 open my $Check, "> /home/$hostname".".txt"; #You may check the NFS workable or not at the same time
+
 print $Check "****NFS test\n";
 $temp = `df -hT`;
 print $Check "$temp\n";
@@ -52,6 +52,8 @@ print  $Check "\n\nIf you see the 9 test results, the nis setting is ok\n";
 print  $Check "========****End of NIS test\n\n";
 print $Check "\n\n***** date check******\n";
 my $temp3 = `date`;
-print $Check "****date check: $temp3\n";
+print $Check "****date check: $temp3\n\n";
+my $temp4 = `ulimit -a|grep 'locked memory'`;
+print $Check "****memlock check: $temp4\n";
 print $Check "ALL DONE!!\n";
 close($Check);

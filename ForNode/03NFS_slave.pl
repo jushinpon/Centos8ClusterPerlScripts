@@ -27,5 +27,5 @@ if(!`grep 'mount -a' /etc/rc.local`){
 if(!`grep 'setsebool -P use_nfs_home_dirs 1' /etc/rc.local`){
 	`echo 'setsebool -P use_nfs_home_dirs 1' >> /etc/rc.local`;}
 	
-#`setsebool -P use_nfs_home_dirs 1`;
+`setsebool -P use_nfs_home_dirs 1`;
 system("mount -a");
