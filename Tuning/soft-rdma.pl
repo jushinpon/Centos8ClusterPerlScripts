@@ -1,9 +1,8 @@
 =beg
-This Perl script uses the Expect module to scp all required Perl scripts from server to each node after you assign the private IP
-for all nodes. We put all scripts in the directory "ForNode".-- developed by Prof. Shin-Pon Ju at NSYSU (11/28/2019)
-
-./Server/Server_setting.dat should be copied to each node for the following setting. (scp..) 
-Nodes_IP.dat: from 00initial_interfacesSetting.pl
+Modify the memlock in /etc/security/limits.conf for master and each node 
+soft-roce configuration below:
+https://community.mellanox.com/s/article/howto-configure-soft-roce
+Nodes_IP.dat is required
 =cut
 #!/usr/bin/perl
 use strict;
@@ -11,7 +10,58 @@ use warnings;
 use Expect;
 use Cwd; #Find Current Path
 use Parallel::ForkManager;
-use MCE::Shared;
+#use MCE::Shared;
+
+### soft-roce for master
+system
+
+
+
+
+
+#Reading required information for node 
+open my $ss,"< ../Server/Server_setting.dat" or die "No Server_setting.dat to open.\n $!";
+my @temp_array = <$ss>;
+close $ss; 
+
+my @temp_array1=grep (($_!~m{^\s*$|^#}),@temp_array); # remove blank lines
+my %ServerSetting; # keep all information for Server setting
+for (@temp_array1){
+	$_  =~ s/^\s+|\s+$//;
+	my @temp = split (/=/,$_) ;
+	$temp[0]  =~ s/^\s+|\s+$//;
+	chomp ($temp[0]);
+	$temp[1]  =~ s/^\s+|\s+$//;
+	chomp ($temp[1]);
+	$ServerSetting{$temp[0]} = $temp[1] ;
+}
+
+#get internet card name
+my $temp = `ip a|grep "state UP"`;
+my @temp = split "\n", $temp;
+my @temp1 = grep (($_!~m{^\s*$}),@temp); # remove blank lines
+my $upStateNo = @temp1;
+if ($upStateNo > 1){die "The Number \($upStateNo\) of up state NIC is more than one!!\n";}
+$temp1[0] =~ m{:\s+(.+)\s*:};
+chomp $1;
+print "NIC: $1\n";
+if ($1 eq ""){die "No NIC exits\n";}
+
+my $Nic_inner = $1;
+`ip a`=~ m{192.168.0.(\d{1,3})\/24};
+my $fourthdigital = $1;
+my $nodeID = $fourthdigital - 1;# node ID according to th fourth number of current IP
+# get MAC of each internet card
+my %mac;
+my $ipne = `ip add show $Nic_inner`;      
+$ipne =~ /(\w+:\w+:\w+:\w+:\w+:\w+)/;# the first matched item is mac!
+$mac{$Nic_inner}="$1";      
+$nodeID =~ s/^\s+|\s+$//;
+chomp($nodeID);
+my $formatted_nodeID = sprintf("%02d",$nodeID);
+my $hostname="node"."$formatted_nodeID";
+
+
 #****$jobtype = "nohup" or "copy"
 my $jobtype = "nohup";# nohup perl for node scripts, otherwise copy files only
 
@@ -69,3 +119,11 @@ my @ls = `ssh $nodename 'ls /root/{*.pl,Server_setting.dat}'`;
 #for (@ls) {chomp;print "ls: $_ \n";}
 my $lsno = @ls;
 chomp $lsno;
+
+if(!`grep '* soft memlock unlimited' /etc/security/limits.conf`){
+	`echo '* soft memlock unlimited' >> /etc/security/limits.conf`;
+}
+if(!`grep '* hard memlock unlimited' /etc/security/limits.conf`){
+	`echo '* hard memlock unlimited' >> /etc/security/limits.conf`;
+}
+
