@@ -140,5 +140,11 @@ system("timedatectl set-timezone Asia/Taipei");## setting timezone
 #my $current_path = getcwd;# get the current path dir
 #chdir("$current_path/geany-themes");
 #system (" bash install.sh");
+
+# disable automatic updating
+system("systemctl stop dnf-automatic");
+system("systemctl disable dnf-automatic");
+system("dnf remove dnf-automatic -y");
+
 print "\n\n***###00interfaces_master.pl: set internet card done******\n\n";
 print "Please check FailedPackageInstall.dat!!!\n";

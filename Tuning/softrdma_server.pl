@@ -15,6 +15,9 @@ Nodes_IP.dat is required
 # ibv_rc_pingpong -d rxe0 -g 1 <server_management_ip>
 
 https://www.cnblogs.com/kaishirenshi/p/10286307.html
+
+tool script:
+https://github.com/Mellanox/mlnx-tools.git
 =cut
 #!/usr/bin/perl
 use strict;

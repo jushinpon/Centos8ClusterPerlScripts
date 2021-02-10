@@ -25,4 +25,9 @@ system("perl -p -i.bak -e 's/.*GSSAPIAuthentication.+/GSSAPIAuthentication no/;'
 system("perl -p -i.bak -e 's/.*UseDNS.+/UseDNS no/;' /etc/ssh/sshd_config");
 system("killall -9 dnf");
 system("systemctl restart sshd");
+# disable automatic updating
+system("systemctl stop dnf-automatic");
+system("systemctl disable dnf-automatic");
+system("dnf remove dnf-automatic -y");
+
 system("dnf -y upgrade");
