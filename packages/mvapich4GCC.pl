@@ -1,12 +1,16 @@
-#Perl script to Downlaod and install MPICH developed by Prof. Shin-Pon Ju
-#1. You need go to https://www.mpich.org/downloads/ to check the latest mpich version and set the downloading url
-#2. compiling procedure
-#a. make a directory to download the tar.gz file 
-#b.  this file (wget -O mpich XXX)
-#c. unziptar xvzf
-#d. configure, make, make install
-#e. --with-slurm=[PATH]  --with-pmix=[PATH] 
+=b
+Perl script to Downlaod and install mvapich2 (developed by Prof. Shin-Pon Ju)
 
+only the following adpter cards are supported:  	
+#define MV2_STR_MLX          "mlx"	 	#define MV2_STR_MLX          "mlx"
+#define MV2_STR_MLX4         "mlx4"	 	#define MV2_STR_MLX4         "mlx4"
+#define MV2_STR_MLX5         "mlx5"	 	#define MV2_STR_MLX5         "mlx5"
+#define MV2_STR_MTHCA        "mthca"	 	#define MV2_STR_MTHCA        "mthca"
+#define MV2_STR_IPATH        "ipath"	 	#define MV2_STR_IPATH        "ipath"
+#define MV2_STR_QIB          "qib"	 	#define MV2_STR_QIB          "qib"
+#define MV2_STR_HFI1         "hfi1"	 	#define MV2_STR_HFI1         "hfi1"
+#define MV2_STR_EHCA         "ehca"	 	#define MV2_STR_EHCA         "ehca"
+=cut 
 sub path_setting{
 	my $attached_path = shift;	
 	my $path = $ENV{'PATH'};
@@ -44,7 +48,8 @@ chomp $thread4make;
 print "Total threads can be used for make: $thread4make\n";
 
 my $currentVer = "mvapich2-2.3.5";#***** the latest version of this package
-my $prefixPath = "/opt/$currentVer-softRDMA";#/opt/slurm_$currentVer if works with slurm
+#my $prefixPath = "/opt/$currentVer-mrail";#/opt/slurm_$currentVer if works with slurm
+my $prefixPath = "/opt/$currentVer-unity";#/opt/slurm_$currentVer if works with slurm
 chomp $prefixPath;
 system ("rm -rf $prefixPath");# remove the older directory first
 my $URL = "http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3.5.tar.gz";
@@ -82,7 +87,12 @@ unlink "Makefile";
 sleep(1);
 #--enable-fast=all,O3 --with-slurm-include=/usr/local/include/slurmCPPFLAGS=-I/home/packages/mpich_download/mpich-3.3.2/src/pmi/pmi2/include
 #:--with-device=ch3:sock  for 1G ether card --with-pm=slurm --with-pmi=pmi2
-system("./configure --with-device=ch3:mrail --prefix=$prefixPath --with-rdma=gen2 --enable-g=dbg --enable-debuginfo");
+#--with-device=ch3:mrail --with-rdma=gen2
+#--with-device=ch3:nemesis
+#system("./configure --with-device=ch3:mrail --with-rdma=gen2 --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
+#system("./configure --with-device=ch3:sock --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
+#system("./configure --with-device=ch3:nemesis --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
+system("./configure --with-device=ch3:nemesis:ib,tcp --with-rdma=gen2 --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
 #system("./configure --enable-g=all --enable-error-messages=all --enable-slurm=yes --prefix=$prefixPath --with-pm=slurm --with-pmi=pmi2 --with-slurm=/usr/local --with-slurm-include=/usr/local/include/slurm");# --with-slurm=[/usr/local] VERBOSE=1 |tee 00mpich_configure.txt"); #./configure
 if($?){die "config $currentVer failed!\nReason $?:$!\n";}
 #die"configure completed\n";
