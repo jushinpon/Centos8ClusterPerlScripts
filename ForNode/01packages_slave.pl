@@ -9,6 +9,11 @@ if(!`grep '* soft memlock unlimited' /etc/security/limits.conf`){
 if(!`grep '* hard memlock unlimited' /etc/security/limits.conf`){
 	`echo '* hard memlock unlimited' >> /etc/security/limits.conf`;
 }
+if(!`grep 'ulimit -l unlimited' /etc/profile`){
+	`echo 'ulimit -l unlimited' >> /etc/profile`;
+}
+
+system(". /etc/profile");
 
 system("rm -rf /var/run/dnf.pid");
 system('dnf -y groupinstall "Development Tools"');

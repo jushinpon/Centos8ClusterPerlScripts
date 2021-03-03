@@ -13,6 +13,9 @@ use warnings;
 use Expect;  
 use Parallel::ForkManager;
 use MCE::Shared;
+
+my $newnodes = "yes"; # no for brand new installation, yesy for adding new nodes into cluster
+
 my $expectT = 5;# time peroid for expect
 
 $ENV{TERM} = "vt100";
@@ -31,14 +34,16 @@ for (@avaIP){
 my $forkNo = @avaIP;
 print "forkNo: $forkNo\n";
 
-system("rm -f /root/\.ssh/*");# remove unexpect thing first
-system("mkdir /root/\.ssh/*");
-chdir("/root/.ssh");
-system("ssh-keygen -t rsa -N \"\" -f id_rsa");
-system("cp id_rsa.pub authorized_keys");
-system("chmod 700 /root/\.ssh");
-system("chmod 640 /root/\.ssh/authorized_keys");
-system("systemctl restart sshd");
+if ($newnodes eq "no"){
+	system("rm -f /root/\.ssh/*");# remove unexpect thing first
+	system("mkdir /root/\.ssh/*");
+	chdir("/root/.ssh");
+	system("ssh-keygen -t rsa -N \"\" -f id_rsa");
+	system("cp id_rsa.pub authorized_keys");
+	system("chmod 700 /root/\.ssh");
+	system("chmod 640 /root/\.ssh/authorized_keys");
+	system("systemctl restart sshd");
+}
 #### make .ssh directory of each node
 
 my $pm = Parallel::ForkManager->new("$forkNo");

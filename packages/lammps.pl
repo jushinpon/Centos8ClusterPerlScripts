@@ -22,17 +22,17 @@ sub ld_setting {
 }
 
 #my $mattached_path = "/opt/mpich-3.3.2/bin";#attached path in main script
-#my $mattached_path = "/opt/mpich-3.4_UCX/bin";#attached path in main script
+#my $mattached_path = "/opt/mpich-3.4.1/bin";#attached path in main script
 #path_setting($mattached_path);#:/opt/intel/mkl/lib/intel64
 #my $mattached_ld = "/opt/mpich-3.3.2/lib";#attached ld path in main script
-#my $mattached_ld = "/opt/mpich-3.4_UCX/lib";#attached ld path in main script
+#my $mattached_ld = "/opt/mpich-3.4.1/lib";#attached ld path in main script
 #ld_setting($mattached_ld);
 
 #my $mattached_path = "/opt/openmpi-4.1.0/bin";#attached path in main script
-my $mattached_path = "/opt/mvapich2-2.3.5-softRDMA/bin";#attached path in main script
+my $mattached_path = "/opt/mvapich2-2.3.5-srunMrail/bin";#attached path in main script
 path_setting($mattached_path);#:/opt/intel/mkl/lib/intel64
 #my $mattached_ld = "/opt/openmpi-4.1.0/lib";#attached ld path in main script
-my $mattached_ld = "/opt/mvapich2-2.3.5-softRDMA/lib";#attached ld path in main script
+my $mattached_ld = "/opt/mvapich2-2.3.5-srunMrail/lib";#attached ld path in main script
 ld_setting($mattached_ld);
 
 use warnings;
@@ -42,7 +42,8 @@ use Cwd; #Find Current Path
 use File::Copy; # Copy File
 #use Env::Modify qw(:sh source);
 
-my $wgetORgit = "no";
+my $wgetORgit = "yes";
+
 my $packageDir = "/home/packages";
 if(!-e $packageDir){# if no /home/packages, make this folder	
 	system("mkdir $packageDir");	
@@ -62,12 +63,12 @@ my $currentPath = getcwd(); #get perl code path
 	my $getdat ="date"." $datformat ";
 	my $test=`$getdat`;
 	chomp $test;
-	#my $lmp_exe = "/opt/lammps-mpich-3.4"."_UCX"."/lmp"."_$test";### make date information
-	#my $lmp_exeDir = "/opt/lammps-mpich-3.4"."_UCX/";### make date information
+	#my $lmp_exe = "/opt/lammps-mpich-3.4.1"."/lmp"."_$test";### make date information
+	#my $lmp_exeDir = "/opt/lammps-mpich-3.4.1/";### make date information
     #my $lmp_exe = "/opt/lammps-openmpi-4.1.0"."/lmp"."_$test";### make date information
 	#my $lmp_exeDir = "/opt/lammps-openmpi-4.1.0/";### make date information
-    my $lmp_exe = "/opt/lammps-mvapich-2.3.5"."/lmp"."_$test";### make date information
-	my $lmp_exeDir = "/opt/lammps-mvapich-2.3.5/";### make date information
+    my $lmp_exe = "/opt/lammps-mvapich-2.3.5_srunMrail"."/lmp"."_$test";### make date information
+	my $lmp_exeDir = "/opt/lammps-mvapich-2.3.5_srunMrail/";### make date information
 
 ####### in the directory of $lammps_download
 if($wgetORgit eq "yes"){
@@ -78,18 +79,18 @@ if($wgetORgit eq "yes"){
 	system("git clone $URL lammps");
 	#system("wget -O lammps $URL");
 	#system("tar xvzf lammps");
-	chdir("$Dir4download/lammps");# cd to this dir for downloading the packages
-	system("git checkout tags/stable_3Mar2020 -b stable");#user-bigwind ok
-	#system("git checkout tags/stable_29OctMar2020 -b stable");#user-bigwind bad
-	sleep(5);
-	system("git pull");
+	#chdir("$Dir4download/lammps");# cd to this dir for downloading the packages
+	#system("git checkout tags/stable_3Mar2020 -b stable");#user-bigwind ok
+	##system("git checkout tags/stable_29OctMar2020 -b stable");#user-bigwind bad
+	#sleep(5);
+	#system("git pull");
 
 ## copy our packages here
-#chdir("$currentPath");# cd to this dir for downloading the packages
+chdir("$currentPath");# cd to this dir for downloading the packages
 
-	system("rm -rf  $Dir4download/lammps/src/USER-BIGWIND");
-	system("cp -fR ./USER-BIGWIND $Dir4download/lammps/src");
-	if($?){die "Can't copy user-bigwind into lammps/src\n"}
+	#system("rm -rf  $Dir4download/lammps/src/USER-BIGWIND");
+	#system("cp -fR ./USER-BIGWIND $Dir4download/lammps/src");
+	#if($?){die "Can't copy user-bigwind into lammps/src\n"}
 	#### do some settings before make (make sure the one or ones you want to modify first!!!!)
 	system("perl -p -i.bak -e 's/#define maxelt.+/#define maxelt 10/;' $Dir4download/lammps/src/USER-MEAMC/meam.h");
 	system("perl -p -i.bak -e 's/CCFLAGS\\s+=.+/CCFLAGS = -g -O3 -std=c++11 -fopenmp/;' $Dir4download/lammps/src/MAKE/Makefile.mpi");
@@ -97,7 +98,6 @@ if($wgetORgit eq "yes"){
 }
 
 chdir("$Dir4download/lammps/src");
-
 
 	system ("make no-all");# uninstall all packages at the very beginning
 	#system ("make all");# install all packages at the very beginning

@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 #CentOS 8 one click to set up Server
 ########## Things to know first 
 #1. You need to check the internet card name before installation (ls /etc/sysconfig/network-scripts|grep ifcfg-*)
@@ -5,9 +7,9 @@
 #yum -y install net-tools
 ##****** perl -v to make sure Perl has been installed!!!!!!!!!!!!
 #2. try ip addr
+#3. for geany: export DISPLAY=:0.0 into /etc/profile 
 
 ## basic setting
-#!/usr/bin/perl
 
 use strict;
 use warnings;
@@ -145,6 +147,13 @@ system("timedatectl set-timezone Asia/Taipei");## setting timezone
 system("systemctl stop dnf-automatic");
 system("systemctl disable dnf-automatic");
 system("dnf remove dnf-automatic -y");
+
+# setting parameters in /etc/profile and then source it
+if(!`grep 'export export DISPLAY=:0.0' /etc/profile`){
+`echo 'export DISPLAY=:0.0' >> /etc/profile`;
+}
+system(". /etc/profile");
+if($?) {print ". /etc/profile failed!!!\n";}
 
 print "\n\n***###00interfaces_master.pl: set internet card done******\n\n";
 print "Please check FailedPackageInstall.dat!!!\n";

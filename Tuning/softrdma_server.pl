@@ -26,7 +26,7 @@ use Cwd; #Find Current Path
 use Parallel::ForkManager;
 system("systemctl enable rdma");
 system("systemctl start rdma");
-system("yum install -y  libocrdma libibverbs libibverbs-utils infiniband-diags perftest");
+system("yum install -y libibverbs libibverbs-utils infiniband-diags perftest");
 #system("yum -y install libibverbs libibverbs-devel libibverbs-utils librdmacm librdmacm-devel librdmacm-utils");
 #
 #[root@localhost ~]# more /etc/security/limits.d/rdma.conf

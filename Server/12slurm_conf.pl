@@ -43,7 +43,7 @@ my $master_coresocketNo = $lscpu_coresocketNo/$master_numaNo;
 #print "sleeping !!!!\n";
 #sleep(100);
 my @partition = (
-'PartitionName=debug Nodes=node[01-02] Default=YES MaxTime=INFINITE State=UP DisableRootJobs=NO',
+'PartitionName=debug Nodes=node[01-03] Default=YES MaxTime=INFINITE State=UP DisableRootJobs=NO',
 #'PartitionName=AMD64Cores Nodes=node[02-03] Default=YES MaxTime=INFINITE State=UP',
 #'PartitionName=AMD Nodes=node02 Default=NO MaxTime=INFINITE State=UP'
 );

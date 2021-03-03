@@ -14,12 +14,17 @@
 #cp /root/slurm/slurm-19.05.4/etc/slurmctld.service /etc/systemd/system/
 #systemctl daemon-reload
 #/etc/ld.so.conf: add /usr/local/lib/ , then ldconfig # for mpiexec
+
+### for new nodes, you must modify IP_node
 use warnings;
 use strict;
 use Expect;
 use Parallel::ForkManager;
 use MCE::Shared;
 use Cwd; #Find Current Path
+
+my $wgetORgit = "no";
+
 # find all threads to make this package
 my $thread4make = `lscpu|grep "^CPU(s):" | sed 's/^CPU(s): *//g'`;
 chomp $thread4make;
@@ -125,18 +130,19 @@ chdir($current_path);
 #
 #=big
 #Begin downloading and install process
-
-system ("rm -rf $Dir4download");# remove the older directory first
-system("mkdir $Dir4download");# make a new directory for NFS (because the package is needed for each node)
-
-chdir("$Dir4download");
-system("wget  $URL");
-
-system("rm -rf $buildPath");# remove old one
-system("mkdir $buildPath");# make a new one
-system("cp $currentVer $buildPath");# make a new one
-sleep(3);
-chdir($current_path);
+if($wgetORgit eq "yes"){
+	system ("rm -rf $Dir4download");# remove the older directory first
+	system("mkdir $Dir4download");# make a new directory for NFS (because the package is needed for each node)
+	
+	chdir("$Dir4download");
+	system("wget  $URL");
+	
+	system("rm -rf $buildPath");# remove old one
+	system("mkdir $buildPath");# make a new one
+	system("cp $currentVer $buildPath");# make a new one
+	sleep(3);
+	chdir($current_path);
+}
 #die "uninstall check\n";
 ######## begin install slurm in each node (need fork in the future)
 print "**** Install slurm for each node\n";

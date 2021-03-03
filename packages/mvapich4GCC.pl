@@ -33,7 +33,7 @@ use Env::Modify qw(:sh source);
 use Cwd; #Find Current Path
 use File::Copy; # Copy File
 
-my $wgetORgit = "no";#yes or no
+my $wgetORgit = "yes";#yes or no
 
 my $packageDir = "/home/packages";
 if(!-e $packageDir){# if no /home/packages, make this folder	
@@ -49,7 +49,7 @@ print "Total threads can be used for make: $thread4make\n";
 
 my $currentVer = "mvapich2-2.3.5";#***** the latest version of this package
 #my $prefixPath = "/opt/$currentVer-mrail";#/opt/slurm_$currentVer if works with slurm
-my $prefixPath = "/opt/$currentVer-unity";#/opt/slurm_$currentVer if works with slurm
+my $prefixPath = "/opt/$currentVer-srunMrail";#/opt/slurm_$currentVer if works with slurm
 chomp $prefixPath;
 system ("rm -rf $prefixPath");# remove the older directory first
 my $URL = "http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-2.3.5.tar.gz";
@@ -92,8 +92,8 @@ sleep(1);
 #system("./configure --with-device=ch3:mrail --with-rdma=gen2 --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
 #system("./configure --with-device=ch3:sock --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
 #system("./configure --with-device=ch3:nemesis --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
-system("./configure --with-device=ch3:nemesis:ib,tcp --with-rdma=gen2 --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
-#system("./configure --enable-g=all --enable-error-messages=all --enable-slurm=yes --prefix=$prefixPath --with-pm=slurm --with-pmi=pmi2 --with-slurm=/usr/local --with-slurm-include=/usr/local/include/slurm");# --with-slurm=[/usr/local] VERBOSE=1 |tee 00mpich_configure.txt"); #./configure
+#system("./configure --with-device=ch3:nemesis:ib,tcp --with-rdma=gen2 --prefix=$prefixPath --enable-g=dbg --enable-debuginfo");
+system("./configure --enable-slurm=yes --prefix=$prefixPath --with-pm=slurm --with-pmi=pmi2 --with-slurm=/usr/local --with-slurm-include=/usr/local/include/slurm --with-device=ch3:mrail --with-rdma=gen2");# --with-slurm=[/usr/local] VERBOSE=1 |tee 00mpich_configure.txt"); #./configure
 if($?){die "config $currentVer failed!\nReason $?:$!\n";}
 #die"configure completed\n";
 #after the configure process is done, type "make" and then "make install"

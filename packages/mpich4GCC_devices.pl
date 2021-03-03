@@ -48,10 +48,10 @@ my $thread4make = `lscpu|grep "^CPU(s):" | sed 's/^CPU(s): *//g'`;
 chomp $thread4make;
 print "Total threads can be used for make: $thread4make\n";
 
-my $currentVer = "mpich-3.3.2";#***** the latest version of this package
-my $prefixPath = "/opt/$currentVer"."_UCX";#you may use your own
+my $currentVer = "mpich-3.4.1";#***** the latest version of this package
+my $prefixPath = "/opt/$currentVer";#you may use your own
 system ("rm -rf $prefixPath");# remove the older directory first
-my $URL = "http://www.mpich.org/static/downloads/3.3.2/mpich-3.3.2.tar.gz";
+my $URL = "http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz";
 my $Dir4download = "$packageDir/$currentVer"."_download"; #the directory we download MPICH
 
 ###
