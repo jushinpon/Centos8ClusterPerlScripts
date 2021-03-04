@@ -22,10 +22,12 @@ sub ld_setting {
 	my $ld_library_path = $ENV{'LD_LIBRARY_PATH'};	
 	$ENV{'LD_LIBRARY_PATH'} = "$attached_ld:$ld_library_path";		
 }
-my $mattached_path = "/opt/slurm_mvapich2-2.3.4/bin";#attached path in main script
+#my $mattached_path = "/opt/slurm_mvapich2-2.3.4/bin";#attached path in main script
+my $mattached_path = "/opt/mpich-3.3.2/bin";#attached path in main script
 path_setting($mattached_path);
 #/opt/intel/compilers_and_libraries_2018.0.128/linux/mkl/lib/intel64_lin
-my $mattached_ld = "/opt/slurm_mvapich2-2.3.4/lib:/opt/intel/mkl/lib/intel64";#attached ld path in main script
+#my $mattached_ld = "/opt/slurm_mvapich2-2.3.4/lib:/opt/intel/mkl/lib/intel64";#attached ld path in main script
+my $mattached_ld = "/opt/mpich-3.3.2/lib:/opt/intel/mkl/lib/intel64";#attached ld path in main script
 ld_setting($mattached_ld);
 
 #!/bin/sh
@@ -33,19 +35,22 @@ use warnings;
 use strict;
 use Cwd; #Find Current Path
 
+my $wgetORgit = "no";## if you want to download the source, use yes. set no, if you have downloaded the source.
+
 my $packageDir = "/home/packages";
 if(!-e $packageDir){# if no /home/packages, make this folder	
 	system("mkdir $packageDir");	
 }
 
 ###install intel MKL
-#system("dnf -y install yum-utils");
-#system("yum-config-manager --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo");
-#if($?){die "add intel repo failed!\n";}
-#system("rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB");
-#if($?){die "import intel repo key failed!\n";}
-#system("yum install -y intel-mkl");
+system("yum -y install yum-utils");
+system("yum-config-manager --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo");
+if($?){die "add intel repo failed!\n";}
+system("rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB");
+if($?){die "import intel repo key failed!\n";}
+system("yum install -y intel-mkl");
 
+my $prefix = "/opt/QEGCC_MPICH3.3.2";
 my $package = "q-e";
 my $currentVer = "qe-6.5.tar.gz";#***** the latest version of this package (check the latest one if possible)
 my $unzipFolder = "q-e-qe-6.5";#***** the unzipped folder of this package (check the latest one if possible)
@@ -58,39 +63,51 @@ my $currentVer1 = "thermo_pw.1.3.0.tar.gz";#***** the latest version of this pac
 my $unzipFolder1 = "thermo_pw";#***** the unzipped folder of this package (check the latest one if possible)
 my $URL1 = "http://people.sissa.it/~dalcorso/thermo_pw/"."$currentVer1";#url to download
 
-my $script_CurrentPath = getcwd; #get perl code path
-#system("rm -rf $Dir4download");# remove the older directory first
-#system("mkdir $Dir4download");# make a directory in current path
+my $script_CurrentPath = getcwd(); #get perl code path
 
-##download qe
-chdir("$Dir4download");# cd to this dir for downloading the packages
+if($wgetORgit eq "yes"){
+	system("rm -rf $Dir4download");# remove the older directory first
+	system("mkdir $Dir4download");# make a directory in current path
+
+##download qe and thermo_pw
+	chdir("$Dir4download");# cd to this dir for downloading the packages
 ##get the latest package in the directory and save it as the filename you want
-#system("wget $URL"); # download qe
-#if($?){die "wget $URL failed!!\n";} 
-#system("wget $URL1"); # download thermo_pw
-#if($?){die "wget $URL1 failed!!\n";} 
+	system("wget $URL"); # download qe
+	if($?){die "wget $URL failed!!\n";} 
+	system("wget $URL1"); # download thermo_pw
+	if($?){die "wget $URL1 failed!!\n";}
+	chdir("$script_CurrentPath");
+
+} 
+
+chdir("$Dir4download");# cd to this dir for downloading the packages
+
 system("rm -rf $unzipFolder");
 system("tar xvzf $currentVer");#unzip qe
 if($?){die "tar xvzf $currentVer failed!!\n";} 
-#system("tar xvzf $currentVer1");#unzip thermo_pw
-#if($?){die "tar xvzf $currentVer1 failed!!\n";} 
+
+system("rm -rf $unzipFolder1");
+system("tar xvzf $currentVer1");#unzip thermo_pw
+if($?){die "tar xvzf $currentVer1 failed!!\n";} 
 
 if(! -d "$Dir4download/$unzipFolder" ){
 	die "No $unzipFolder folder after tar! You need to find the correct folder name\n";
 }
 
-#if(! -d "$Dir4download/$unzipFolder1" ){
-#	die "No $unzipFolder1 folder after tar! You need to find the correct folder name\n";
-#}
+if(! -d "$Dir4download/$unzipFolder1" ){
+	die "No $unzipFolder1 folder after tar! You need to find the correct folder name\n";
+}
 #copy required files and make (check "usage" of https://github.com/dalcorso/thermo_pw)
-#system("rm -rf $Dir4download/$unzipFolder/$unzipFolder1");
-#system("cp -r $Dir4download/$unzipFolder1 $Dir4download/$unzipFolder/");
-#if($?){die "copy thermo_pw to qe folder failed!\n";}
+system("rm -rf $Dir4download/$unzipFolder/$unzipFolder1");
+system("cp -r $Dir4download/$unzipFolder1 $Dir4download/$unzipFolder/");
+if($?){die "copy thermo_pw to qe folder failed!\n";}
 
 chdir("$Dir4download/$unzipFolder");# cd to this dir for downloading the packages
 my $date=`date +%Y%m%d`;
-my $prefix = "--prefix=/opt/QEGCC";
-system("rm -rf /opt/QEGCC");
+
+my $prefix4QE = "--prefix=$prefix";
+system("rm -rf $prefix");
+
 #system("./configure $prefix F90=ifort F77=mpiifort MPIF90=mpiifort CC=mpiicc $BLAS_LIBS $LAPACK_LIBS $SCALAPACK_LIBS $FFT_LIBS $FFLAGS $MPI_LIBS --enable-parallel");
 # find all threads to make this package
 my $thread4make = `lscpu|grep "^CPU(s):" | sed 's/^CPU(s): *//g'`;
@@ -104,16 +121,16 @@ my $FFLAGS="FFLAGS=\"-O3 \"";
 my $MPI_LIBS ="MPI_LIBS=\"-L/opt/slurm_mvapich2-2.3.4/lib -lmpi\"";#### need to use your own path for impi
 my $LIBDIRS="LIBDIRS=\"/opt/slurm_mvapich2-2.3.4/lib\"";
 #$SCALAPACK_LIBS -with-scalapack=yes $FFT_LIBS $MPI_LIBS $LIBDIRS $BLAS_LIBS $SCALAPACK_LIBS
-#system("./configure --enable-parallel $prefix");
-system("./configure --enable-parallel  $FFLAGS $prefix -with-scalapack=intel");
+#system("./configure --enable-parallel $prefix");-with-scalapack=intel
+system("./configure --enable-parallel  $FFLAGS $prefix4QE");
 if($?){die "**QE configure fails!\nReason:$?\n";}
 #after the configure process is done, type "make" and then "make install"
 system("make clean"); 
 if($?){die "**make QE clean fails";}
 
-#chdir("$Dir4download/$unzipFolder/$unzipFolder1");# cd to this dir for downloading the packages
-#system("make join_qe");
-#if($?){die "make join_qe in thermo_pw directory failed!\nReason:$?\n";}
+chdir("$Dir4download/$unzipFolder/$unzipFolder1");# cd to this dir for downloading the packages
+system("make join_qe");
+if($?){die "make join_qe in thermo_pw directory failed!\nReason:$?\n";}
 
 chdir("$Dir4download/$unzipFolder");# cd to this dir for downloading the packages
 

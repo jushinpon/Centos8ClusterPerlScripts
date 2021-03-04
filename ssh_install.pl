@@ -1,6 +1,6 @@
-for (2..9){
+for (1..2){
     $nodeindex=sprintf("%02d",$_);
     $nodename= "node"."$nodeindex";
-    system("ssh $nodename 'yum install -y perl-Statistics-Descriptive'");
+    system("ssh $nodename 'shutdown -h now'");
 
 }
