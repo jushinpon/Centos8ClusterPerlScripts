@@ -65,6 +65,13 @@ my $URL1 = "http://people.sissa.it/~dalcorso/thermo_pw/"."$currentVer1";#url to 
 
 my $script_CurrentPath = getcwd(); #get perl code path
 
+chdir("/opt");# cd to this dir for downloading the packages
+system("rm -rf /opt/QEpot");
+system("tar -xvzf $script_CurrentPath/QEpot.tar.gz");
+if($?){die "tar QEpot.tar.gz failed!!\n";}
+die;
+
+chdir("$script_CurrentPath");# cd to this dir for downloading the packages
 if($wgetORgit eq "yes"){
 	system("rm -rf $Dir4download");# remove the older directory first
 	system("mkdir $Dir4download");# make a directory in current path
