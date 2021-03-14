@@ -17,8 +17,8 @@ use MCE::Shared;
 my $expectT = 5;# time peroid for expect
 
 $ENV{TERM} = "vt100";
-my $pass = "mem4268"; ##For all roots of nodes
-my $user = "haha";
+my $pass = "XXXX"; ##For all roots of nodes
+my $user = "XXX";
 
 open my $ss,"< ./Nodes_IP.dat" or die "No Nodes_IP.dat to read"; 
 my @temp_array=<$ss>;
@@ -134,3 +134,5 @@ for (@avaIP){
 	#$pm->finish;
 }# for loop
 print "\n\n***###user_rsa.pl: user passwordless setting done******\n\n";
+
+print "\n\n***IMPORTANT!!! Remove unsafe information in this script!!!!******\n\n";

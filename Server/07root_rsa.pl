@@ -19,7 +19,7 @@ my $newnodes = "no"; # no for brand new installation, yesy for adding new nodes 
 my $expectT = 5;# time peroid for expect
 
 $ENV{TERM} = "vt100";
-my $pass = "123"; ##For all roots of nodes
+my $pass = "XXXXX"; ##For all roots of nodes
 
 open my $ss,"< ./Nodes_IP.dat" or die "No Nodes_IP.dat to read"; 
 my @temp_array=<$ss>;
@@ -187,3 +187,5 @@ for (@avaIP){
 	#$pm->finish;
 }# for loop
 print "\n\n***###05root_rsa.pl: root passwordless setting done******\n\n";
+print "\n\n***IMPORTANT!!! Remove unsafe information in this script!!!!******\n\n";
+
