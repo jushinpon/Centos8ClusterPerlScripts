@@ -16,6 +16,7 @@ $reboot_check = "yes";
 #}
 #die;
 
+
 for (1..3){
     $pm->start and next;
     $nodeindex=sprintf("%02d",$_);
@@ -47,3 +48,16 @@ if($reboot_check eq "yes"){
 		if($?){print "reboot for $nodename hasn't done!!\n\n"}	
 	}
 }
+
+#for (1..41){
+#    #$pm->start and next;
+#    $nodeindex=sprintf("%02d",$_);
+#    $nodename= "node"."$nodeindex";
+#    #system("ssh $nodename 'dnf install perl-Statistics-Descriptive -y'");
+#    print "nodename:$nodename\n";
+#    system("munge -n \| ssh $nodename unmunge");
+#    if($!){sleep(3);}
+#    #$pm->finish;
+#}
+#$pm->wait_all_children;
+

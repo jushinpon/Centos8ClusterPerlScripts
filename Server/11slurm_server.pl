@@ -23,7 +23,7 @@ use Parallel::ForkManager;
 use MCE::Shared;
 use Cwd; #Find Current Path
 
-my $wgetORgit = "no";
+my $wgetORgit = "yes";
 
 # find all threads to make this package
 my $thread4make = `lscpu|grep "^CPU(s):" | sed 's/^CPU(s): *//g'`;
@@ -167,7 +167,7 @@ $pm->wait_all_children;
 
 my @slurm_pack = qw(rpm-build openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel 
 rrdtool-devel bzip2-devel zlib-devel ncurses-devel fribidi man2html libibmad libibumad perl-ExtUtils-MakeMaker perl-DBI  perl-DBD-SQLite
-wget python3 );
+wget python3 gtk*);
 
 for (@slurm_pack){
 	system("dnf -y install $_");
