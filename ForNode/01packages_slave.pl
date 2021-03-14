@@ -23,7 +23,8 @@ system("dnf config-manager --set-enable powertools");
 `dnf remove -y cockpit`;# not use this web manager tool for cluster
 my @package = ("vim", "wget", "net-tools", "epel-release", "htop", "make"
 			, "gcc-c++", "nfs-utils","yp-tools", "gcc-gfortran","psmisc"
-			, "ypbind" , "rpcbind","xauth","oddjob-mkhomedir");
+			, "ypbind" , "rpcbind","xauth","oddjob-mkhomedir","perl-Statistics-Descriptive","libibverbs"
+			,"libibverbs-utils","infiniband-diags","perftest");
 
 for (@package){system("dnf -y install $_");}
 system("perl -p -i.bak -e 's/.*GSSAPIAuthentication.+/GSSAPIAuthentication no/;' /etc/ssh/sshd_config");

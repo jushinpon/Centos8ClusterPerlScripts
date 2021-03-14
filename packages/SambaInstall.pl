@@ -5,14 +5,14 @@ system("rm $ConfPath");
 system("touch $ConfPath");
 
 $filename = 'home';
-$filepath = '/home';
+$filepath = '/home/jsp';
 $description = 'Shared'; 
 $browseable = 'yes';
 $readonly = 'no';
 $Autority = '777';
-$UserList = 'jsp,root';
+$UserList = 'jsp';
 #$hostallow = '140.117.59.184'; #maybe u don't need this because u have firewall,right?
-@UserList = ("jsp","root");
+@UserList = ("jsp");
 
 `echo "\n\[$filename\]" >> $ConfPath`;
 `echo "	comment = $description" >> $ConfPath`;
