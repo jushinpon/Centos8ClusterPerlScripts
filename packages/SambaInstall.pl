@@ -11,10 +11,10 @@ system ("firewall-cmd --reload"); #reload
 
 my $ConfPath = '/etc/samba/smb.conf'; # path of smb.conf
 my @UserList = ("jsp","pitotech"); # the users (you want to use samba)
-my @smb_obj = (["jsp","jsp","/home/jsp"],["pitotech","pitotech","/home/jsp"]);# obj name, user (more than one is ok. like "jsp,pitotech"), and corresponding path
+my @smb_obj = (["jsp","jsp","/home/jsp"]);# obj name, user (more than one is ok. like "jsp,pitotech"), and corresponding path
 
 ## some settings
-my $defaultPass = "mem4268";
+my $defaultPass = "XXXXX";
 my $description = 'Shared'; 
 my $browseable = 'yes';
 my $readonly = 'No';
