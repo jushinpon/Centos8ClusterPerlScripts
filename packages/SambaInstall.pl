@@ -1,44 +1,63 @@
+#!/usr/bin/perl
+# smbpasswd: change smb passwd by each user (default passwd: mem4268)
+use strict;
+use warnings;
+use Expect;
+
 system ("systemctl stop smb");
 system("yum install samba -y");
-system("firewall-cmd --zone=external --add-port=139/tcp --permanent"); # for samba
+system("firewall-cmd --zone=external --add-port=139/tcp --permanent"); # for samba port
 system ("firewall-cmd --reload"); #reload
 
-$ConfPath = '/etc/samba/smb.conf';
-system("rm $ConfPath");
+my $ConfPath = '/etc/samba/smb.conf'; # path of smb.conf
+my @UserList = ("jsp","pitotech"); # the users (you want to use samba)
+my @smb_obj = (["jsp","jsp","/home/jsp"],["pitotech","pitotech","/home/jsp"]);# obj name, user (more than one is ok. like "jsp,pitotech"), and corresponding path
+
+## some settings
+my $defaultPass = "mem4268";
+my $description = 'Shared'; 
+my $browseable = 'yes';
+my $readonly = 'No';
+my $Authority = '755';
+
+system("rm -f $ConfPath");
 system("touch $ConfPath");
 
-$filename = 'jsp_only';
-$filepath = '/home/jsp';
-$description = 'Shared'; 
-$browseable = 'yes';
-$readonly = 'yes';
-$Authority = '755';
-$UserList = 'jsp';
-#$hostallow = '140.117.59.184'; #maybe u don't need this because u have firewall,right?
-@UserList = ("jsp");
-
-`echo "\n\[$filename\]" >> $ConfPath`;
-`echo "	comment = $description" >> $ConfPath`;
-`echo "	path = $filepath" >> $ConfPath`;
-`echo "	browseable = $browseable" >> $ConfPath`;
-`echo "	writable = $browseable" >> $ConfPath`;
-`echo "	create mask = $Authority" >> $ConfPath`;
-`echo "	directory mask = $Authority" >> $ConfPath`;
-`echo "	valid users = $UserList" >> $ConfPath`;
-`echo "	read only = Yes" >> $ConfPath`;
-
-foreach (@UserList)
-	{
-		system ("echo '123'|pdbedit -a -u $_"); #you need to set passwd for samba by hand 
-	}
-
-`echo '
-	[global]
+#smb global setting
+`echo '[global]
 	workgroup = SAMBA
 	netbios name = SAMBA_NETBIOS
 	server string = SAMBA SERVER	 
 	security = user' >> $ConfPath
 	`;
+
+for my $objID (0..$#smb_obj){
+	#print "objID: $objID,$smb_obj[$objID][0], $smb_obj[$objID][1],$smb_obj[$objID][2]\n";
+	chomp ($smb_obj[$objID][0], $smb_obj[$objID][1],$smb_obj[$objID][2]);
+	
+	`echo "\n\[$smb_obj[$objID][0]\]" >> $ConfPath`;
+	`echo "	valid users = $smb_obj[$objID][1]" >> $ConfPath`;
+	`echo "	path = $smb_obj[$objID][2]" >> $ConfPath`;
+	`echo "	comment = $description" >> $ConfPath`;
+	`echo "	browseable = $browseable" >> $ConfPath`;
+	`echo "	writable = $browseable" >> $ConfPath`;
+	`echo "	create mask = $Authority" >> $ConfPath`;
+	`echo "	directory mask = $Authority" >> $ConfPath`;
+	`echo "	read only = $readonly" >> $ConfPath`;	
+}
+
+my $expectT = 5;
+foreach (@UserList){
+		chomp;
+		#system ("echo 'mem4268'|pdbedit -a -u $_"); #you need to set passwd for samba by hand 
+		my $exp = Expect->new;
+		$exp = Expect->spawn("pdbedit -a -u $_ \n");
+		$exp -> send("$defaultPass\n") if ($exp->expect($expectT,"new password:"));
+		$exp -> send("$defaultPass\n") if ($exp->expect($expectT,"retype new password:"));
+		$exp -> send("\n");
+        $exp->soft_close();
+}
+
 system("echo -e '\n'| testparm > smbCheck.txt");#for test the install process done or not 
 system ("systemctl start smb");
 system ("systemctl enable smb");
